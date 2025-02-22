@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>跳跃者</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            touch-action: manipulation;
+            display: flex;
+            justify-content: center;
+            background: #f0f0f0;
+        }
+        #gameCanvas {
+            background: #87CEEB;
+            margin-top: 20px;
+        }
+        #score {
+            position: fixed;
+            top: 20px;
+            font-size: 24px;
+            font-family: Arial;
+            color: white;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+        #restart {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            padding: 15px 30px;
+            font-size: 20px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div id="score">得分: 0</div>
+    <canvas id="gameCanvas"></canvas>
+    <button id="restart">重新开始</button>
+
+<script>
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+let isMobile = /Mobi|Android/i.test(navigator.userAgent);
+
+// 初始化画布尺寸
+function resizeCanvas() {
+    canvas.width = Math.min(800, window.innerWidth - 20);
+    canvas.height = Math.min(600, window.innerHeight - 20);
+}
+resizeCanvas();
+window.addEventListener('resize', resizeCanvas);
+
+// 游戏状态
+let gameState = {
+    player: {
+        x: 100,
+        y: 300,
+        width: 40,
+        height: 40,
+        velocityY: 0,
+        isJumping: false
+    },
+    obstacles: [],
+    speed: 4,
+    score: 0,
+    isGameOver: false,
+    gravity: 0.8,
+    jumpForce: -16
+};
+
+// 输入处理
+document.addEventListener('keydown', (e) => {
+    if (e.code === 'Space') handleJump();
+});
+canvas.addEventListener('touchstart', (e) => {
+    e.preventDefault();
+    handleJump();
+});
+
+// 游戏循环
+function gameLoop() {
+    if (gameState.isGameOver) return;
+    
+    update();
+    render();
+    requestAnimationFrame(gameLoop);
+}
+
+function update() {
+    // 玩家物理
+    gameState.player.y += gameState.player.velocityY;
+    gameState.player.velocityY += gameState.gravity;
+    
+    // 地面碰撞
+    if (gameState.player.y >= canvas.height - gameState.player.height) {
+        gameState.player.y = canvas.height - gameState.player.height;
+        gameState.player.velocityY = 0;
+        gameState.player.isJumping = false;
+    }
+
+    // 障碍物生成
+    if (Math.random() < 0.02 + gameState.speed*0.002) {
+        generateObstacle();
+    }
+
+    // 障碍物移动
+    gameState.obstacles.forEach(obstacle => {
+        obstacle.x -= gameState.speed;
+        
+        // 碰撞检测
+        if (checkCollision(gameState.player, obstacle)) {
+            gameOver();
+        }
+    });
+
+    // 移除屏幕外障碍物
+    gameState.obstacles = gameState.obstacles.filter(obstacle => 
+        obstacle.x + obstacle.width > 0
+    );
+
+    // 难度提升
+    gameState.speed += 0.002;
+    gameState.score++;
+    document.getElementById('score').textContent = `得分: ${Math.floor(gameState.score/10)}`;
+}
+
+function render() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    
+    // 绘制玩家
+    ctx.fillStyle = '#e74c3c';
+    ctx.fillRect(
+        gameState.player.x,
+        gameState.player.y,
+        gameState.player.width,
+        gameState.player.height
+    );
+
+    // 绘制障碍物
+    ctx.fillStyle = '#2ecc71';
+    gameState.obstacles.forEach(obstacle => {
+        ctx.fillRect(obstacle.x, obstacle.y, obstacle.width, obstacle.height);
+    });
+}
+
+function generateObstacle() {
+    const lastObstacle = gameState.obstacles[gameState.obstacles.length - 1];
+    const minGap = 300 + gameState.speed * 5;
+    const baseX = lastObstacle ? lastObstacle.x : canvas.width;
+    
+    // 智能生成算法
+    const newX = baseX + Phaser.Math.Between(minGap, minGap + 200);
+    const newHeight = Phaser.Math.Between(40, 120);
+    const verticalSpace = canvas.height - newHeight - gameState.player.height;
+    
+    gameState.obstacles.push({
+        x: newX,
+        y: canvas.height - newHeight,
+        width: 30,
+        height: newHeight
+    });
+}
+
+function handleJump() {
+    if (!gameState.player.isJumping) {
+        gameState.player.velocityY = gameState.jumpForce;
+        gameState.player.isJumping = true;
+    }
+}
+
+function checkCollision(player, obstacle) {
+    return player.x < obstacle.x + obstacle.width &&
+           player.x + player.width > obstacle.x &&
+           player.y < obstacle.y + obstacle.height &&
+           player.y + player.height > obstacle.y;
+}
+
+function gameOver() {
+    gameState.isGameOver = true;
+    document.getElementById('restart').style.display = 'block';
+}
+
+// 重新开始
+document.getElementById('restart').addEventListener('click', () => {
+    gameState = {
+        player: {
+            x: 100,
+            y: 300,
+            width: 40,
+            height: 40,
+            velocityY: 0,
+            isJumping: false
+        },
+        obstacles: [],
+        speed: 4,
+        score: 0,
+        isGameOver: false
+    };
+    document.getElementById('restart').style.display = 'none';
+    gameLoop();
+});
+
+// 启动游戏
+gameLoop();
+
+// 工具函数
+const Phaser = {
+    Math: {
+        Between: (min, max) => Math.random() * (max - min) + min
+    }
+};
+</script>
+</body>
+</html>
