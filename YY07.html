@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <!-- 这是抬头文件 -->
+        <title>玉岩中学初一七班专属网页</title>
+        <script>
+            
+            function checkPassword() {
+                const password = prompt("请输入密码，密码正确才可以打开：");
+                if (password === "YY07") {
+                    const expression = prompt("请输入一个数学加法运算（如 1 + 1）：");
+                    try {
+                        const result = eval(expression);
+                        alert("结果是：" + result);
+                    } catch (error) {
+                        alert("输入错误，请确保输入正确的数学表达式。");
+                    }
+                } else {
+                    alert("密码错误！");
+                }
+            }
+
+
+            // 解一元一次方程
+            function solveEquation() {
+                const equation = prompt("请输入一元一次方程（如 2x + 5 = 0）：");
+
+                // 使用正则表达式匹配方程中的系数和常数项
+                const equationRegex = /([+-]?\d*)x\s*([+-]?\s*\d+)\s*=\s*([+-]?\d+)/;
+                const match = equation.match(equationRegex);
+
+                if (match) {
+                    // 解析方程
+                    let coefficient = match[1] ? parseInt(match[1].replace(/\s/g, '')) : 1;
+                    let constant = parseInt(match[2].replace(/\s/g, ''));
+                    let result = parseInt(match[3].replace(/\s/g, ''));
+
+                    // 计算解
+                    if (coefficient === 0) {
+                        alert("方程无解！");
+                    } else {
+                        const solution = (result - constant) / coefficient;
+                        alert(`方程的解是: x = ${solution}`);
+                    }
+                } else {
+                    alert("无效的方程格式，请重新输入！");
+                }
+            }
+
+            
+            function checkStudentID() {
+            var studentID = prompt("请输入学号：");
+
+            if (studentID == "27") {
+                localStorage.setItem('username', '程泓霖');
+                localStorage.setItem('loggedIn', true);
+                alert("姓名：程泓霖\n登录成功");
+                updateUI();
+            } else if (studentID == "30") {
+                localStorage.setItem('username', '关皓元');
+                localStorage.setItem('loggedIn', true);
+                alert("姓名：关皓元\n登录成功");
+                updateUI();
+            } else {
+                alert("暂无该学号，请联系网站开发者注册！");
+            }
+        }
+            
+            
+        // 显示登录用户信息
+        function displayUserInfo() {
+            if (loggedInUser) {
+                document.getElementById("userInfo").innerHTML = `欢迎，${loggedInUser}！`;
+            }
+        }
+        document.getElementById("loginButton").addEventListener("click", function() {
+            login();
+        });
+            // 选择并播放歌曲
+            function playSong() {
+                const songChoice = prompt("请选择歌曲：\n1. 裹着心的光\n2. 多远都要在一起");
+                
+                let songFile = '';
+                let lyrics = '';
+                
+                if (songChoice === '1') {
+                    songFile = '裹着心的光 - 林俊杰.mp3'; // 你需要提供实际的音频文件路径
+                } else if (songChoice === '2') {
+                    songFile = 'G.E.M.邓紫棋 - 多远都要在一起.mp3'; // 你需要提供实际的音频文件路径
+                } else {
+                    alert("无效的选择！");
+                    return;
+                }
+
+                // 如果已有音频在播放，则暂停它
+                if (currentAudio) {
+                    currentAudio.pause();
+                }
+
+                // 播放新的音频
+                currentAudio = new Audio(songFile);
+                currentAudio.play();
+
+                // 展示歌词
+                document.getElementById('lyrics').innerHTML = lyrics;
+            }
+
+            // 暂停当前播放的音频
+            function pauseAudio() {
+                if (currentAudio) {
+                    currentAudio.pause();  // 暂停音频
+                } else {
+                    alert("没有正在播放的音频！");
+                }
+            }
+        </script>
+    </head>
+    <body>
+        <!-- 主题内容 -->
+        <div class="content">
+            <h1>欢迎来到初一七班的专属网站</h1>
+            <h3>测试中，仅内部成员看到 网站制作/代理/服务/编程：42号同学</h3>
+            <p>该网站运行暂不稳定，请谅解，能打开就很不错了，说明你网络很好，信号不错</p>
+            <a href="http://weather.cma.cn/">点击这里访问天气网站</a>
+            <a href="https://chat18.aichatos58.com/#/chat/1730610747635">点击这里访问免费ai</a>
+            <a href="https://arvin71.github.io/YY0701test_website-madefrom42XHX/新建文本文档.html">点击这里查看背单词系统（原创）</a>
+            <br><br>
+            <button onclick="checkPassword()">计算器请点我</button>
+            <br><br>
+            <button onclick="solveEquation()" id="redButton" style="background-color: red; color: white;">解一元一次方程</button>
+            <br><br>
+            <!-- 新增的点歌按钮 -->
+            <button onclick="playSong()" style="background-color: purple; color: white;">点歌</button>
+            <br><br>
+            <!-- 新增的暂停按钮 -->
+            <button onclick="pauseAudio()" style="background-color: orange; color: white;">暂停</button>
+            <br><br>
+            <button onclick="checkStudentID()">登录</button>
+            <div id="welcomeMessage"></div>
+            <button id="gundeButton" style="display: none;" onclick="addGunde()">功德+1 <span id="gundeCount">0</span></button>
+            <div id="drawResult"></div>
+            <div id="lyrics" style="margin-top: 20px; font-size: 16px; color: black;"></div>
+        </div>
+    </body>
+    <style>
+        body {
+            background-image: url(./448895542201417792.jpg);
+            font-family: Arial, Helvetica, sans-serif;
+            color: brown;
+        }
+
+        .content {
+            background-color: transparent;
+            width: 300px;
+            padding: 40px;
+            position: absolute;
+            top: 30%;
+            left: 30%;
+        }
+
+        button {
+            padding: 10px 20px;
+            margin: 10px;
+            cursor: pointer;
+        }
+    </style>
+</html>
