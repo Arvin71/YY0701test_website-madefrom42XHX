@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>单词学习系统</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+        }
+        .container {
+            width: 50%;
+            margin: auto;
+        }
+        #word-container, #quiz-container {
+            margin-top: 20px;
+            text-align: center;
+        }
+        .btn {
+            padding: 10px 20px;
+            margin: 10px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        .btn:hover {
+            background-color: #45a049;
+        }
+        input[type="text"] {
+            padding: 5px;
+            width: 200px;
+            margin: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>单词学习系统</h1>
+        <div id="input-container">
+            <h3>录入单词及其意思</h3>
+            <input type="text" id="word-input" placeholder="输入单词">
+            <input type="text" id="meaning-input" placeholder="输入意思">
+            <button class="btn" id="add-word-btn">添加单词</button>
+        </div>
+
+        <div id="start-learning-container" style="display: block; text-align: center;">
+            <button class="btn" id="start-learning-btn">开始学习</button>
+        </div>
+
+        <div id="word-container" style="display: none;">
+            <h3>单词： <span id="display-word"></span></h3>
+            <h3>意思： <span id="display-meaning"></span></h3>
+            <button class="btn" id="next-btn">下一个</button>
+        </div>
+
+        <div id="quiz-container" style="display: none;">
+            <h3 id="quiz-question"></h3>
+            <input type="text" id="quiz-answer" placeholder="输入你的答案">
+            <button class="btn" id="check-answer-btn">提交答案</button>
+            <h3 id="quiz-result"></h3>
+            <button class="btn" id="next-quiz-btn" style="display: none;">下一个问题</button>
+        </div>
+
+        <div id="finish-container" style="display: none; text-align: center;">
+            <button class="btn" id="readd-words-btn">重新添加单词</button>
+        </div>
+    </div>
+
+    <script>
+        let wordsList = []; // 存储用户录入的单词及意思
+        let currentIndex = 0; // 当前学习的单词索引
+        let quizIndex = 0; // 当前测试的单词索引
+        let quizMode = ''; // 当前选择的题目模式（英文、中文、随机）
+        let shuffledWordsList = []; // 随机打乱后的单词列表
+        let randomMode = ''; // 当前单词的随机显示模式（英文或中文）
+
+        // 获取元素
+        const wordInput = document.getElementById('word-input');
+        const meaningInput = document.getElementById('meaning-input');
+        const addWordBtn = document.getElementById('add-word-btn');
+        const startLearningBtn = document.getElementById('start-learning-btn');
+        const displayWord = document.getElementById('display-word');
+        const displayMeaning = document.getElementById('display-meaning');
+        const nextBtn = document.getElementById('next-btn');
+        const quizQuestion = document.getElementById('quiz-question');
+        const quizAnswer = document.getElementById('quiz-answer');
+        const checkAnswerBtn = document.getElementById('check-answer-btn');
+        const quizResult = document.getElementById('quiz-result');
+        const nextQuizBtn = document.getElementById('next-quiz-btn');
+        const readdWordsBtn = document.getElementById('readd-words-btn');
+
+        // 添加单词和意思
+        addWordBtn.addEventListener('click', function() {
+            const word = wordInput.value.trim();
+            const meaning = meaningInput.value.trim();
+            if (word && meaning) {
+                wordsList.push({ word, meaning });
+                wordInput.value = '';
+                meaningInput.value = '';
+                alert('单词添加成功!');
+            } else {
+                alert('请填写单词和意思');
+            }
+        });
+
+        // 开始学习
+        startLearningBtn.addEventListener('click', function() {
+            if (wordsList.length > 0) {
+                // 隐藏录入区域，显示学习区域
+                document.getElementById('input-container').style.display = 'none';
+                document.getElementById('start-learning-container').style.display = 'none';
+                document.getElementById('word-container').style.display = 'block';
+
+                // 不打乱顺序，按照输入顺序学习
+                shuffledWordsList = wordsList.slice();
+
+                // 显示第一个单词
+                showWord();
+            } else {
+                alert('请先添加单词');
+            }
+        });
+
+        // 显示当前单词和意思
+        function showWord() {
+            if (currentIndex < shuffledWordsList.length) {
+                const wordData = shuffledWordsList[currentIndex];
+                displayWord.textContent = wordData.word;
+                displayMeaning.textContent = wordData.meaning;
+                // 如果是最后一个单词，则改变“下一个”按钮为“进入检测模式”
+                if (currentIndex === shuffledWordsList.length - 1) {
+                    nextBtn.textContent = "进入检测模式";
+                } else {
+                    nextBtn.textContent = "下一个";
+                }
+            }
+        }
+
+        // 下一单词按钮
+        nextBtn.addEventListener('click', function() {
+            if (currentIndex < shuffledWordsList.length - 1) {
+                currentIndex++;
+                showWord();
+            } else {
+                // 所有单词学完，弹出选择题目模式
+                const mode = prompt("请选择题目模式: 输入 '1' 显示英文题目, '2' 显示中文题目, '3' 随机题目");
+                if (mode === '1' || mode === '2' || mode === '3') {
+                    quizMode = mode;
+                    document.getElementById('word-container').style.display = 'none';
+                    document.getElementById('quiz-container').style.display = 'block';
+                    startQuiz();
+                } else {
+                    alert("无效的输入，请重新选择");
+                }
+            }
+        });
+
+        // 随机打乱数组顺序
+        function shuffle(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]]; // 交换元素
+            }
+            return array;
+        }
+
+        // 启动检测模式
+        function startQuiz() {
+            if (quizIndex < shuffledWordsList.length) {
+                const wordData = shuffledWordsList[quizIndex];
+                quizResult.textContent = ''; // 清空结果
+                quizAnswer.value = ''; // 清空答案输入框
+                nextQuizBtn.style.display = 'none'; // 隐藏下一个按钮
+
+                // 根据模式出题
+                if (quizMode === '1') {
+                    quizQuestion.textContent = `请填写单词 "${wordData.word}" 的意思：`;
+                } else if (quizMode === '2') {
+                    quizQuestion.textContent = `请填写意思 "${wordData.meaning}" 的单词：`;
+                } else if (quizMode === '3') {
+                    // 随机选择显示英文或中文
+                    randomMode = Math.random() > 0.5 ? '1' : '2'; // 50%概率选择英文或中文
+                    if (randomMode === '1') {
+                        quizQuestion.textContent = `请填写单词 "${wordData.word}" 的意思：`;
+                    } else {
+                        quizQuestion.textContent = `请填写意思 "${wordData.meaning}" 的单词：`;
+                    }
+                }
+            } else {
+                // 测试完所有单词，显示完成按钮
+                document.getElementById('quiz-container').style.display = 'none';
+                document.getElementById('finish-container').style.display = 'block';
+            }
+        }
+
+        // 提交答案并判断对错
+        checkAnswerBtn.addEventListener('click', function() {
+            const userAnswer = quizAnswer.value.trim();
+            const correctAnswer = shuffledWordsList[quizIndex].meaning;
+            const correctWord = shuffledWordsList[quizIndex].word;
+
+            if (quizMode === '1' && userAnswer === correctAnswer) {
+                quizResult.textContent = '答对了！';
+            } else if (quizMode === '2' && userAnswer.toLowerCase() === correctWord.toLowerCase()) {
+                quizResult.textContent = '答对了！';
+            } else {
+                if (quizMode === '1') {
+                    quizResult.textContent = `答错了哦，正确答案是: ${correctAnswer}`;
+                } else if (quizMode === '2') {
+                    quizResult.textContent = `答错了哦，正确答案是: ${correctWord}`;
+                } else if (quizMode === '3') {
+                    if (randomMode === '1') {
+                        quizResult.textContent = `答错了哦，正确答案是: ${correctAnswer}`;
+                    } else {
+                        quizResult.textContent = `答错了哦，正确答案是: ${correctWord}`;
+                    }
+                }
+            }
+            nextQuizBtn.style.display = 'block'; // 显示下一个按钮
+        });
+
+        // 下一个测试问题
+        nextQuizBtn.addEventListener('click', function() {
+            if (quizIndex < shuffledWordsList.length - 1) {
+                quizIndex++;
+                startQuiz();
+            } else {
+                alert('已完成所有测试');
+            }
+        });
+
+        // 重新添加单词
+        readdWordsBtn.addEventListener('click', function() {
+            wordsList = [];
+            shuffledWordsList = [];
+            currentIndex = 0;
+            quizIndex = 0;
+            document.getElementById('finish-container').style.display = 'none';
+            document.getElementById('input-container').style.display = 'block';
+            document.getElementById('start-learning-container').style.display = 'block';
+        });
+    </script>
+</body>
+</html>
