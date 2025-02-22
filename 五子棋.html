@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>2D射击游戏最终版</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            touch-action: none;
+            font-family: Arial, sans-serif;
+        }
+        #gameCanvas {
+            background: #222;
+        }
+        #menu {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            color: white;
+        }
+        .controls {
+            position: fixed;
+            bottom: 20px;
+            width: 100%;
+            display: none;
+            justify-content: space-between;
+            padding: 0 20px;
+            box-sizing: border-box;
+        }
+        .joystick {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.3);
+            position: relative;
+            touch-action: none;
+        }
+        .joystick-handle {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.8);
+            position: absolute;
+            top: 20px;
+            left: 20px;
+        }
+        #shootBtn {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: rgba(255,0,0,0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            font-size: 24px;
+            touch-action: none;
+        }
+        #aimIndicator {
+            position: absolute;
+            width: 2px;
+            height: 40px;
+            background: white;
+            opacity: 0.8;
+            transform-origin: bottom center;
+            display: none;
+            transition: transform 0.1s;
+        }
+        @media (hover: none) and (pointer: coarse) {
+            .controls { display: flex; }
+        }
+    </style>
+</head>
+<body>
+    <canvas id="gameCanvas"></canvas>
+    <div id="menu">
+        <h1>2D射击游戏</h1>
+        <button onclick="startGame('easy')">简单模式</button>
+        <button onclick="startGame('normal')">普通模式</button>
+        <button onclick="startGame('hard')">困难模式</button>
+    </div>
+    <div class="controls">
+        <div class="joystick" id="moveJoystick">
+            <div class="joystick-handle"></div>
+        </div>
+        <div id="shootBtn">射击</div>
+    </div>
+    <div id="aimIndicator"></div>
+
+<script>
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+let canvasWidth = window.innerWidth;
+let canvasHeight = window.innerHeight;
+
+// 游戏对象
+let player, bullets, enemies, gameSpeed, spawnRate, isGameRunning;
+let joystickActive = false;
+let joystickVector = {x: 0, y: 0};
+let mouseX = canvasWidth/2, mouseY = canvasHeight/2;
+const aimIndicator = document.getElementById('aimIndicator');
+let lastShotTime = 0;
+const shootCooldown = 200; // 射击冷却时间
+
+// 初始化游戏
+function initGame(difficulty) {
+    canvas.width = canvasWidth;
+    canvas.height = canvasHeight;
+    
+    player = {
+        x: canvasWidth/2,
+        y: canvasHeight/2,
+        size: 30,
+        speed: 10, // 提高移动速度
+        color: '#4CAF50'
+    };
+
+    bullets = [];
+    enemies = [];
+    
+    // 根据难度设置
+    switch(difficulty) {
+        case 'easy':
+            gameSpeed = 3;
+            spawnRate = 120;
+            break;
+        case 'normal':
+            gameSpeed = 5;
+            spawnRate = 80;
+            break;
+        case 'hard':
+            gameSpeed = 7;
+            spawnRate = 50;
+            break;
+    }
+
+    isGameRunning = true;
+    document.getElementById('menu').style.display = 'none';
+    gameLoop();
+}
+
+// 游戏循环
+function gameLoop() {
+    if (!isGameRunning) return;
+
+    ctx.clearRect(0, 0, canvasWidth, canvasHeight);
+
+    // 移动玩家
+    if (joystickActive) {
+        player.x += joystickVector.x * player.speed;
+        player.y += joystickVector.y * player.speed;
+    }
+
+    // 边界检测
+    player.x = Math.max(player.size, Math.min(canvasWidth - player.size, player.x));
+    player.y = Math.max(player.size, Math.min(canvasHeight - player.size, player.y));
+
+    // 绘制玩家
+    ctx.fillStyle = player.color;
+    ctx.beginPath();
+    ctx.arc(player.x, player.y, player.size, 0, Math.PI * 2);
+    ctx.fill();
+
+    // 更新子弹
+    bullets.forEach((bullet, index) => {
+        bullet.x += bullet.dx;
+        bullet.y += bullet.dy;
+        
+        // 绘制子弹
+        ctx.fillStyle = '#FFEB3B';
+        ctx.fillRect(bullet.x, bullet.y, bullet.size, bullet.size);
+
+        // 移除屏幕外的子弹
+        if (bullet.x < 0 || bullet.x > canvasWidth || 
+            bullet.y < 0 || bullet.y > canvasHeight) {
+            bullets.splice(index, 1);
+        }
+    });
+
+    // 生成敌人
+    if (Math.random() < 1/spawnRate) {
+        const side = Math.floor(Math.random() * 4);
+        let x, y;
+        switch(side) {
+            case 0: // 上
+                x = Math.random() * canvasWidth;
+                y = -50;
+                break;
+            case 1: // 右
+                x = canvasWidth + 50;
+                y = Math.random() * canvasHeight;
+                break;
+            case 2: // 下
+                x = Math.random() * canvasWidth;
+                y = canvasHeight + 50;
+                break;
+            case 3: // 左
+                x = -50;
+                y = Math.random() * canvasHeight;
+                break;
+        }
+        enemies.push({
+            x, y,
+            size: 20 + Math.random() * 20,
+            speed: gameSpeed,
+            color: '#F44336'
+        });
+    }
+
+    // 更新敌人
+    enemies.forEach((enemy, index) => {
+        // 计算朝向玩家的方向
+        const angle = Math.atan2(player.y - enemy.y, player.x - enemy.x);
+        enemy.x += Math.cos(angle) * enemy.speed;
+        enemy.y += Math.sin(angle) * enemy.speed;
+
+        // 绘制敌人
+        ctx.fillStyle = enemy.color;
+        ctx.beginPath();
+        ctx.arc(enemy.x, enemy.y, enemy.size, 0, Math.PI * 2);
+        ctx.fill();
+
+        // 碰撞检测
+        const dist = Math.hypot(player.x - enemy.x, player.y - enemy.y);
+        if (dist < player.size + enemy.size) {
+            gameOver();
+        }
+
+        // 子弹碰撞检测
+        bullets.forEach((bullet, bIndex) => {
+            const bulletDist = Math.hypot(bullet.x - enemy.x, bullet.y - enemy.y);
+            if (bulletDist < enemy.size) {
+                enemies.splice(index, 1);
+                bullets.splice(bIndex, 1);
+            }
+        });
+    });
+
+    // 更新瞄准指示器
+    updateAimIndicator();
+
+    requestAnimationFrame(gameLoop);
+}
+
+// 射击
+function shoot() {
+    const now = Date.now();
+    if (now - lastShotTime < shootCooldown) return;
+    lastShotTime = now;
+
+    const angle = Math.atan2(mouseY - player.y, mouseX - player.x);
+    bullets.push({
+        x: player.x,
+        y: player.y,
+        dx: Math.cos(angle) * 12,
+        dy: Math.sin(angle) * 12,
+        size: 5
+    });
+}
+
+// 更新瞄准指示器
+function updateAimIndicator() {
+    const angle = Math.atan2(mouseY - player.y, mouseX - player.x);
+    aimIndicator.style.display = 'block';
+    aimIndicator.style.left = `${player.x}px`;
+    aimIndicator.style.top = `${player.y}px`;
+    aimIndicator.style.transform = `rotate(${angle}rad)`;
+}
+
+// 游戏结束
+function gameOver() {
+    isGameRunning = false;
+    document.getElementById('menu').style.display = 'block';
+    aimIndicator.style.display = 'none';
+}
+
+// 开始游戏
+function startGame(difficulty) {
+    initGame(difficulty);
+}
+
+// 虚拟摇杆控制
+const joystick = document.getElementById('moveJoystick');
+const joystickHandle = joystick.querySelector('.joystick-handle');
+
+joystick.addEventListener('touchstart', (e) => {
+    joystickActive = true;
+    updateJoystick(e);
+});
+
+joystick.addEventListener('touchmove', (e) => {
+    updateJoystick(e);
+});
+
+joystick.addEventListener('touchend', () => {
+    joystickActive = false;
+    joystickHandle.style.transform = 'translate(20px, 20px)';
+    joystickVector = {x: 0, y: 0};
+});
+
+function updateJoystick(e) {
+    const rect = joystick.getBoundingClientRect();
+    const touch = e.touches[0];
+    const x = touch.clientX - rect.left - 40;
+    const y = touch.clientY - rect.top - 40;
+    const distance = Math.hypot(x, y);
+    const angle = Math.atan2(y, x);
+
+    const maxDistance = 40;
+    const limitedDistance = Math.min(distance, maxDistance);
+
+    joystickHandle.style.transform = `translate(${Math.cos(angle) * limitedDistance}px, 
+                                     ${Math.sin(angle) * limitedDistance}px)`;
+    
+    joystickVector.x = Math.cos(angle) * (limitedDistance / maxDistance);
+    joystickVector.y = Math.sin(angle) * (limitedDistance / maxDistance);
+}
+
+// 射击按钮
+document.getElementById('shootBtn').addEventListener('touchstart', (e) => {
+    e.preventDefault();
+    shoot();
+});
+
+// 鼠标/触摸位置追踪
+canvas.addEventListener('mousemove', (e) => {
+    const rect = canvas.getBoundingClientRect();
+    mouseX = e.clientX - rect.left;
+    mouseY = e.clientY - rect.top;
+});
+
+canvas.addEventListener('touchmove', (e) => {
+    const rect = canvas.getBoundingClientRect();
+    mouseX = e.touches[0].clientX - rect.left;
+    mouseY = e.touches[0].clientY - rect.top;
+    e.preventDefault();
+});
+
+// 鼠标点击射击
+canvas.addEventListener('mousedown', () => {
+    if (isGameRunning) shoot();
+});
+
+// 键盘控制（电脑端）
+document.addEventListener('keydown', (e) => {
+    if (!isGameRunning) return;
+    
+    switch(e.key) {
+        case 'ArrowUp': player.y -= player.speed; break;
+        case 'ArrowDown': player.y += player.speed; break;
+        case 'ArrowLeft': player.x -= player.speed; break;
+        case 'ArrowRight': player.x += player.speed; break;
+        case ' ': shoot(); break;
+    }
+});
+
+// 窗口大小调整
+window.addEventListener('resize', () => {
+    canvasWidth = window.innerWidth;
+    canvasHeight = window.innerHeight;
+    canvas.width = canvasWidth;
+    canvas.height = canvasHeight;
+});
+</script>
+</body>
+</html>
