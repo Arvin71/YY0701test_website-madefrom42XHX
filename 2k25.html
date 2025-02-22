@@ -4,8 +4,7 @@
         <!-- 这是抬头文件 -->
         <title>玉岩中学初一七班专属网页</title>
         <script>
-            let currentAudio = null;  // 用于保存当前播放的音频对象
-
+            
             function checkPassword() {
                 const password = prompt("请输入密码，密码正确才可以打开：");
                 if (password === "YY07") {
@@ -21,21 +20,6 @@
                 }
             }
 
-            function modifyValue() {
-                // 这里模拟搜索并替换值的操作
-                let content = document.getElementById('content-text').innerHTML;
-                const searchValue = "2036438689";
-                const replaceValue = "2037672291";
-
-                // 替换内容
-                if (content.includes(searchValue)) {
-                    content = content.replace(searchValue, replaceValue);
-                    document.getElementById('content-text').innerHTML = content;
-                    alert(`成功将 ${searchValue} 替换为 ${replaceValue}`);
-                } else {
-                    alert(`未找到数值 ${searchValue}`);
-                }
-            }
 
             // 解一元一次方程
             function solveEquation() {
@@ -63,24 +47,35 @@
                 }
             }
 
-            // 打开对话框与陈全汐机器人对话
-            function openChat() {
-                const userQuestion = prompt("请输入您的问题：");
+            
+            function checkStudentID() {
+            var studentID = prompt("请输入学号：");
 
-                if (userQuestion) {
-                    // 简单的问答机器人
-                    const responses = {
-                        "你好": "你好！我是陈全汐，很高兴与您对话！",
-                        "你是谁": "我是陈全汐，一个简单的对话机器人。",
-                        "今天天气怎么样": "对不起，我目前没有天气信息的接口。",
-                        "帮助": "你可以问我任何问题，我会尽量回答！"
-                    };
-
-                    const response = responses[userQuestion] || "抱歉，我不理解这个问题。";
-                    alert(response);
-                }
+            if (studentID == "27") {
+                localStorage.setItem('username', '程泓霖');
+                localStorage.setItem('loggedIn', true);
+                alert("姓名：程泓霖\n登录成功");
+                updateUI();
+            } else if (studentID == "30") {
+                localStorage.setItem('username', '关皓元');
+                localStorage.setItem('loggedIn', true);
+                alert("姓名：关皓元\n登录成功");
+                updateUI();
+            } else {
+                alert("暂无该学号，请联系网站开发者注册！");
             }
-
+        }
+            
+            
+        // 显示登录用户信息
+        function displayUserInfo() {
+            if (loggedInUser) {
+                document.getElementById("userInfo").innerHTML = `欢迎，${loggedInUser}！`;
+            }
+        }
+        document.getElementById("loginButton").addEventListener("click", function() {
+            login();
+        });
             // 选择并播放歌曲
             function playSong() {
                 const songChoice = prompt("请选择歌曲：\n1. 裹着心的光\n2. 多远都要在一起");
@@ -90,78 +85,8 @@
                 
                 if (songChoice === '1') {
                     songFile = '裹着心的光 - 林俊杰.mp3'; // 你需要提供实际的音频文件路径
-                    lyrics = `《裹着心的光》歌词：
-                    光 拿乌云揉成团
-像鲸鱼吻着浪
-叫我 和你 去飞翔
-人 老无语后落单
-别跟丢了天空 沙滩
-挣脱 回忆 壮胆
-裹着心的光 很暖 与你 有关
-有梦就听得到 用爱呼应感叹
-心里裹着光 的人 世界 很宽
-出发就走得到 来时路不会被 剪断
-当 那无名领头羊
-替明天找希望
-说嘿 有我 别心慌
-来 学萤火虫冥想
-在昏暗中静默 发亮
-是否 有梦 当然
-裹着心的光 很响 说了 别慌
-它说孤单很好 信念创造不凡
-心里裹着光 的人 初衷 不换
-誓言让心不老 带那些梦探索 远方
-一路有雨 也有霜 月落无题江南
-如我面对太阳 如你追希望
-一诺冒险 就得闯 单板翻越冰川
-未来不缺翅膀 冰雨和闷雷 别管
-裹着心的光 很响 说了 别慌
-它说孤单很好 信念创造不凡
-心里裹着光 的人 初衷 不换
-誓言让心不老 带那些梦探索 远方
-问那些年的梦 有多烫`;
                 } else if (songChoice === '2') {
                     songFile = 'G.E.M.邓紫棋 - 多远都要在一起.mp3'; // 你需要提供实际的音频文件路径
-                    lyrics = `《多远都要在一起》歌词：
-                    想听你听过的音乐
-                    想看你看过的小说
-                    我想收集每一刻
-                    我想看到你眼里的世界
-                    想到你到过的地方
-                    和你曾渡过的时光
-                    不想错过每一刻
-                    多希望我一直在你身旁
-未来何从何去
-你快乐我也就没关系
-对你我最熟悉
-你爱自由我却更爱你
-我能习惯远距离
-爱总是身不由己
-宁愿换个方式至少还能遥远爱着你
-爱能克服远距离
-多远都要在一起
-你已经不再存在我世界里
-请不要离开我的回忆
-想你说爱我的语气
-想你望着我的眼睛
-不想忘记每一刻
-用思念让我们一直前进
-想像你失落的唇印
-想像你失约的旅行
-想像你离开的一刻
-如果我有留下你的勇气
-我能习惯远距离
-爱总是身不由己
-宁愿换个方式至少还能遥远爱着你
-爱能克服远距离
-多远都要在一起
-我已经不再存在你的心里
-就让我独自守着回忆
-如果阳光永远都炽热
-如果彩虹不会掉颜色
-你能不能不离开呢
-我能习惯远距离
-爱总是身不由己`;
                 } else {
                     alert("无效的选择！");
                     return;
@@ -195,18 +120,14 @@
         <div class="content">
             <h1>欢迎来到初一七班的专属网站</h1>
             <h3>测试中，仅内部成员看到 网站制作/代理/服务/编程：42号同学</h3>
-            <p>这是小字体</p>
+            <p>该网站运行暂不稳定，请谅解，能打开就很不错了，说明你网络很好，信号不错</p>
             <a href="http://weather.cma.cn/">点击这里访问天气网站</a>
             <a href="https://chat18.aichatos58.com/#/chat/1730610747635">点击这里访问免费ai</a>
+            <a href="https://arvin71.github.io/YY0701test_website-madefrom42XHX/新建文本文档.html">点击这里查看背单词系统（原创）</a>
             <br><br>
             <button onclick="checkPassword()">计算器请点我</button>
             <br><br>
-            <button onclick="modifyValue()" style="background-color: blue; color: white;">修改数值</button>
-            <br><br>
             <button onclick="solveEquation()" id="redButton" style="background-color: red; color: white;">解一元一次方程</button>
-            <br><br>
-            <!-- 新增的聊天按钮 -->
-            <button onclick="openChat()" style="background-color: green; color: white;">与陈全汐对话</button>
             <br><br>
             <!-- 新增的点歌按钮 -->
             <button onclick="playSong()" style="background-color: purple; color: white;">点歌</button>
@@ -214,7 +135,10 @@
             <!-- 新增的暂停按钮 -->
             <button onclick="pauseAudio()" style="background-color: orange; color: white;">暂停</button>
             <br><br>
-            <p id="content-text">这是一个包含数值 2036438689 的文本，点击按钮后它会被替换为 2037672291。</p>
+            <button onclick="checkStudentID()">登录</button>
+            <div id="welcomeMessage"></div>
+            <button id="gundeButton" style="display: none;" onclick="addGunde()">功德+1 <span id="gundeCount">0</span></button>
+            <div id="drawResult"></div>
             <div id="lyrics" style="margin-top: 20px; font-size: 16px; color: black;"></div>
         </div>
     </body>
