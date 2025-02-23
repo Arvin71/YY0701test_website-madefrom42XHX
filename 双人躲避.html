@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>双人跑酷游戏</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            font-family: Arial, sans-serif;
+        }
+        #gameCanvas {
+            background: #87CEEB;
+            display: block;
+        }
+        #hud {
+            position: fixed;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: white;
+            font-size: 24px;
+            background: rgba(0,0,0,0.5);
+            padding: 10px 20px;
+            border-radius: 10px;
+        }
+        #gameOver {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            font-size: 48px;
+            text-align: center;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="gameCanvas"></canvas>
+    <div id="hud">玩家1: <span id="score1">0</span> | 玩家2: <span id="score2">0</span></div>
+    <div id="gameOver">
+        <div id="winnerText"></div>
+        <button onclick="restartGame()">重新开始</button>
+    </div>
+
+<script>
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+let canvasWidth = window.innerWidth;
+let canvasHeight = window.innerHeight;
+
+// 玩家设置
+const player1 = {
+    x: canvasWidth * 0.25,
+    y: canvasHeight - 100,
+    width: 40,
+    height: 60,
+    color: '#FF4136',
+    speedX: 0,
+    speedY: 0,
+    score: 0,
+    controls: {
+        up: 'w',
+        left: 'a',
+        down: 's',
+        right: 'd'
+    }
+};
+
+const player2 = {
+    x: canvasWidth * 0.75,
+    y: canvasHeight - 100,
+    width: 40,
+    height: 60,
+    color: '#0074D9',
+    speedX: 0,
+    speedY: 0,
+    score: 0,
+    controls: {
+        up: 'ArrowUp',
+        left: 'ArrowLeft',
+        down: 'ArrowDown',
+        right: 'ArrowRight'
+    }
+};
+
+// 游戏设置
+let obstacles = [];
+let gameSpeed = 5;
+let isGameRunning = true;
+const playerSpeed = 8;
+const gravity = 0.8;
+const jumpPower = -15;
+
+// 初始化
+function init() {
+    canvas.width = canvasWidth;
+    canvas.height = canvasHeight;
+    createObstacles();
+    gameLoop();
+}
+
+// 创建障碍物
+function createObstacles() {
+    for (let i = 0; i < 5; i++) {
+        obstacles.push({
+            x: Math.random() * canvasWidth,
+            y: -i * canvasHeight/2,
+            width: 80 + Math.random() * 80,
+            height: 20,
+            color: '#3D9970'
+        });
+    }
+}
+
+// 更新玩家
+function updatePlayer(player) {
+    // 水平移动
+    player.x += player.speedX;
+    player.x = Math.max(0, Math.min(canvasWidth - player.width, player.x));
+
+    // 垂直移动（重力）
+    player.speedY += gravity;
+    player.y += player.speedY;
+
+    // 地面检测
+    if (player.y >= canvasHeight - 100) {
+        player.y = canvasHeight - 100;
+        player.speedY = 0;
+    }
+}
+
+// 检测碰撞
+function checkCollision(player, obstacle) {
+    return player.x < obstacle.x + obstacle.width &&
+           player.x + player.width > obstacle.x &&
+           player.y < obstacle.y + obstacle.height &&
+           player.y + player.height > obstacle.y;
+}
+
+// 游戏循环
+function gameLoop() {
+    if (!isGameRunning) return;
+
+    ctx.clearRect(0, 0, canvasWidth, canvasHeight);
+
+    // 绘制地面
+    ctx.fillStyle = '#2ECC40';
+    ctx.fillRect(0, canvasHeight - 100, canvasWidth, 100);
+
+    // 更新并绘制玩家
+    updatePlayer(player1);
+    updatePlayer(player2);
+    ctx.fillStyle = player1.color;
+    ctx.fillRect(player1.x, player1.y, player1.width, player1.height);
+    ctx.fillStyle = player2.color;
+    ctx.fillRect(player2.x, player2.y, player2.width, player2.height);
+
+    // 更新并绘制障碍物
+    obstacles.forEach((obstacle, index) => {
+        obstacle.y += gameSpeed;
+
+        // 绘制障碍物
+        ctx.fillStyle = obstacle.color;
+        ctx.fillRect(obstacle.x, obstacle.y, obstacle.width, obstacle.height);
+
+        // 碰撞检测
+        if (checkCollision(player1, obstacle)) {
+            endGame('玩家2');
+        }
+        if (checkCollision(player2, obstacle)) {
+            endGame('玩家1');
+        }
+
+        // 移除并生成新障碍物
+        if (obstacle.y > canvasHeight) {
+            obstacles.splice(index, 1);
+            obstacles.push({
+                x: Math.random() * canvasWidth,
+                y: -50,
+                width: 80 + Math.random() * 80,
+                height: 20,
+                color: '#3D9970'
+            });
+
+            // 玩家得分
+            player1.score++;
+            player2.score++;
+            document.getElementById('score1').textContent = player1.score;
+            document.getElementById('score2').textContent = player2.score;
+        }
+    });
+
+    // 逐渐加速
+    gameSpeed += 0.005;
+
+    requestAnimationFrame(gameLoop);
+}
+
+// 游戏结束
+function endGame(winner) {
+    isGameRunning = false;
+    document.getElementById('winnerText').textContent = `${winner} 获胜！`;
+    document.getElementById('gameOver').style.display = 'block';
+}
+
+// 重新开始游戏
+function restartGame() {
+    player1.x = canvasWidth * 0.25;
+    player1.y = canvasHeight - 100;
+    player1.score = 0;
+
+    player2.x = canvasWidth * 0.75;
+    player2.y = canvasHeight - 100;
+    player2.score = 0;
+
+    obstacles = [];
+    gameSpeed = 5;
+    isGameRunning = true;
+    document.getElementById('gameOver').style.display = 'none';
+    document.getElementById('score1').textContent = '0';
+    document.getElementById('score2').textContent = '0';
+    createObstacles();
+    gameLoop();
+}
+
+// 键盘控制
+document.addEventListener('keydown', (e) => {
+    // 玩家1控制
+    if (e.key === player1.controls.left) player1.speedX = -playerSpeed;
+    if (e.key === player1.controls.right) player1.speedX = playerSpeed;
+    if (e.key === player1.controls.up && player1.y >= canvasHeight - 100) {
+        player1.speedY = jumpPower;
+    }
+
+    // 玩家2控制
+    if (e.key === player2.controls.left) player2.speedX = -playerSpeed;
+    if (e.key === player2.controls.right) player2.speedX = playerSpeed;
+    if (e.key === player2.controls.up && player2.y >= canvasHeight - 100) {
+        player2.speedY = jumpPower;
+    }
+});
+
+document.addEventListener('keyup', (e) => {
+    if (e.key === player1.controls.left || e.key === player1.controls.right) {
+        player1.speedX = 0;
+    }
+    if (e.key === player2.controls.left || e.key === player2.controls.right) {
+        player2.speedX = 0;
+    }
+});
+
+// 窗口大小调整
+window.addEventListener('resize', () => {
+    canvasWidth = window.innerWidth;
+    canvasHeight = window.innerHeight;
+    canvas.width = canvasWidth;
+    canvas.height = canvasHeight;
+});
+
+// 启动游戏
+init();
+</script>
+</body>
+</html>
